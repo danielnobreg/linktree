@@ -40,10 +40,11 @@
   canvas#bg {
     position: fixed;
     top: 0; left: 0;
-    width: 100%; height: 100%;
+    width: 100vw; 
+    height: 100vh;
+    height: 100dvh;
     z-index: 0;
     pointer-events: none;
-    transition: filter 0.5s ease;
   }
 
   .page {
@@ -439,38 +440,51 @@
 
   const canvas = document.getElementById('bg');
   const ctx = canvas.getContext('2d', { alpha: false });
+  let canvasW, canvasH;
 
   function resize() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    const dpr = window.devicePixelRatio || 1;
+    const vv = window.visualViewport;
+    canvasW = vv ? vv.width : window.innerWidth;
+    canvasH = vv ? vv.height : window.innerHeight;
+    canvas.width = canvasW * dpr;
+    canvas.height = canvasH * dpr;
+    canvas.style.width = canvasW + 'px';
+    canvas.style.height = canvasH + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
   resize();
   window.addEventListener('resize', resize);
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', resize);
+
+  function isMobile() { return window.innerWidth <= 600; }
 
   const waves = [
-    { yRatio: 0.70, amp: 34, freq: 0.007,  speed: 0.000015, phase: 0,   color: '#bed4e0', parallax: 1.5 },
-    { yRatio: 0.79, amp: 26, freq: 0.0095, speed: 0.00025,  phase: 2.1, color: '#abcadd', parallax: 0.8 },
-    { yRatio: 0.88, amp: 19, freq: 0.011,  speed: 0.00035,  phase: 4.3, color: '#cde4f0', parallax: 0.2 },
+    { yDesktop: 0.70, yMobile: 0.55, amp: 34, freq: 0.007,  speed: 0.000015, phase: 0,   color: '#bed4e0', parallax: 1.5 },
+    { yDesktop: 0.79, yMobile: 0.68, amp: 26, freq: 0.0095, speed: 0.00025,  phase: 2.1, color: '#abcadd', parallax: 0.8 },
+    { yDesktop: 0.88, yMobile: 0.80, amp: 19, freq: 0.011,  speed: 0.00035,  phase: 4.3, color: '#cde4f0', parallax: 0.2 },
   ];
 
   let t = 0;
   function drawCanvas() {
     ctx.fillStyle = '#eaeff4';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, canvasW, canvasH);
 
     const smoothTiltX = currentTiltX * 3;
+    const mobile = isMobile();
 
     waves.forEach(w => {
-      const offsetY = canvas.height * w.yRatio + (smoothTiltX * w.parallax);
+      const ratio = mobile ? w.yMobile : w.yDesktop;
+      const offsetY = canvasH * ratio + (smoothTiltX * w.parallax);
       
       ctx.beginPath();
-      ctx.moveTo(0, canvas.height);
-      for (let x = 0; x <= canvas.width + 10; x += 10) { 
-        const mouseInfluence = isTouch ? 0 : Math.sin((x - mouseX) * 0.005) * 5 * (1 - Math.abs(x - mouseX)/window.innerWidth);
+      ctx.moveTo(0, canvasH);
+      for (let x = 0; x <= canvasW + 10; x += 10) { 
+        const mouseInfluence = isTouch ? 0 : Math.sin((x - mouseX) * 0.005) * 5 * (1 - Math.abs(x - mouseX)/canvasW);
         const y = offsetY + Math.sin(x * w.freq + t * w.speed * 60 + w.phase) * w.amp + mouseInfluence;
         ctx.lineTo(x, y);
       }
-      ctx.lineTo(canvas.width, canvas.height);
+      ctx.lineTo(canvasW, canvasH);
       ctx.closePath();
       ctx.fillStyle = w.color;
       ctx.fill();
