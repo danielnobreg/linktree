@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>daniel nóbrega</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300;1,9..40,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #eaeff4;
+    --text: #1a2530;
+    --text-muted: #5a7a8a;
+    --text-soft: #3d6475;
+    --card-bg: rgba(255, 255, 255, 0.52);
+    --card-border: rgba(26, 37, 48, 0.06);
+    --card-hover-border: rgba(255, 255, 255, 0.8);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  html, body { 
+    height: 100%; width: 100%; 
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    overflow-x: hidden;
+    overscroll-behavior: none;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    perspective: 1000px;
+  }
+
+  canvas#bg {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 0;
+    pointer-events: none;
+    transition: filter 0.5s ease;
+  }
+
+  .page {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 500px;
+    padding: 2rem;
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  .name-wrapper {
+    height: 96px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.9rem;
+  }
+
+  .name {
+    font-size: clamp(3.2rem, 11vw, 5rem);
+    font-weight: 300;
+    letter-spacing: -0.035em;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .cursor {
+    display: inline-block;
+    width: 3px;
+    height: 0.8em;
+    background: var(--text-soft);
+    margin-left: 5px;
+    border-radius: 1px;
+    animation: blink 1s step-end infinite;
+  }
+
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+  .tagline {
+    font-size: 0.875rem;
+    font-weight: 400;
+    color: var(--text-muted);
+    text-align: center;
+    line-height: 1.7;
+    margin-bottom: 2.5rem;
+    max-width: 340px;
+  }
+  .tagline em { font-style: italic; color: var(--text-soft); }
+
+  .links-container {
+    width: 100%;
+    perspective: 1200px;
+  }
+
+  .links {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    transform-style: preserve-3d;
+  }
+
+  .link-wrapper {
+    position: relative;
+    width: 100%;
+    will-change: transform;
+    transform-style: preserve-3d;
+  }
+
+  .link-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 20px;
+    border-radius: 16px;
+    border: 1px solid var(--card-border);
+    background: var(--card-bg);
+    color: var(--text);
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 400;
+    letter-spacing: 0.005em;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(55, 120, 160, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    transition: border-color 0.3s ease, background 0.3s ease;
+  }
+
+  .link-glare {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.8), transparent 60%);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 2;
+    mix-blend-mode: overlay;
+    transform: translate(-50%, -50%);
+  }
+
+  .link-item:hover {
+    border-color: var(--card-hover-border);
+    background: rgba(255, 255, 255, 0.7);
+  }
+
+  .link-icon {
+    width: 18px;
+    height: 18px;
+    opacity: 0.6;
+    flex-shrink: 0;
+    transition: opacity 0.3s ease;
+    z-index: 3;
+  }
+  .link-item:hover .link-icon { opacity: 0.9; }
+  .link-label { flex: 1; z-index: 3; }
+
+  .link-arrow {
+    opacity: 0.2;
+    font-size: 0.78rem;
+    transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 3;
+  }
+  .link-item:hover .link-arrow {
+    opacity: 0.6;
+    transform: translateX(4px);
+  }
+
+  .divider {
+    width: 36px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(26, 37, 48, 0.15), transparent);
+    margin: 2rem 0 1.5rem;
+  }
+
+  .contact {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-soft);
+    font-size: 0.85rem;
+    text-decoration: none;
+    padding: 12px 24px;
+    border-radius: 999px;
+    border: 1px solid rgba(61, 100, 117, 0.15);
+    background: rgba(61, 100, 117, 0.04);
+    transition: all 0.3s ease;
+    will-change: transform;
+  }
+
+  .contact:hover {
+    color: var(--text);
+    background: rgba(61, 100, 117, 0.1);
+    border-color: rgba(61, 100, 117, 0.3);
+  }
+  .contact-arrow {
+    opacity: 0.6;
+    transition: transform 0.3s ease;
+  }
+  .contact:hover .contact-arrow {
+    transform: translateX(3px);
+  }
+
+  @media (max-width: 600px) {
+    body { justify-content: flex-start; padding-top: 3rem; overflow-y: auto; }
+    .page { padding: 1.5rem; }
+  }
+
+</style>
+</head>
+<body>
+
+<canvas id="bg"></canvas>
+
+<div class="page" id="page">
+  <div class="name-wrapper">
+    <span class="name">
+      <span id="name-display"></span><span class="cursor"></span>
+    </span>
+  </div>
+
+  <p class="tagline">
+    desenvolvedor, cinéfilo de fim de semana,<br>
+    e alguém que <em>provavelmente tá ouvindo música</em> agora mesmo.
+  </p>
+
+  <div class="links-container" id="links-container">
+    <div class="links">
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <a class="contact" href="mailto:contatonsdaniel@gmail.com" id="contact-btn">
+    fale comigo <span class="contact-arrow">→</span>
+  </a>
+</div>
+
+<script>
+  const linksData = [
+    { label: 'instagram', url: 'https://www.instagram.com/danielnobreg_/', icon: '<rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>' },
+    { label: 'letterboxd', url: 'https://letterboxd.com/danonocean/', icon: '<circle cx="7.5" cy="12" r="4.5"/><circle cx="16.5" cy="12" r="4.5"/>' },
+    { label: 'portfolio', url: 'https://danielnobregadev.vercel.app/', icon: '<polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>' },
+    { label: 'linkedin', url: 'https://www.linkedin.com/in/danielnobregadasilva', icon: '<path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/>' },
+    { label: 'github', url: 'https://github.com/danielnobreg', icon: '<path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>' }
+  ];
+
+  const linksContainer = document.querySelector('.links');
+  linksData.forEach(item => {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'link-wrapper';
+    wrapper.innerHTML = `
+      <a class="link-item" href="${item.url}" target="_blank" rel="noopener noreferrer">
+        <div class="link-glare"></div>
+        <svg class="link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          ${item.icon}
+        </svg>
+        <span class="link-label">${item.label}</span>
+        <span class="link-arrow">→</span>
+      </a>
+    `;
+    linksContainer.appendChild(wrapper);
+  });
+
+  const prefersReducedMotion = false;
+
+  class Spring {
+    constructor(val, tension = 170, friction = 14) {
+      this.val = val; this.target = val; this.vel = 0;
+      this.tension = tension; this.friction = friction;
+    }
+    update(dt) {
+      if (prefersReducedMotion) { this.val = this.target; return; }
+      const force = this.tension * (this.target - this.val) - this.friction * this.vel;
+      this.vel += force * dt;
+      this.val += this.vel * dt;
+    }
+  }
+
+  const lerp = (a, b, t) => a + (b - a) * t;
+
+  let mouseX = window.innerWidth / 2, mouseY = window.innerHeight / 2;
+  let targetTiltX = 0, targetTiltY = 0;
+  let currentTiltX = 0, currentTiltY = 0;
+  let isTouch = false;
+
+  window.addEventListener('mousemove', (e) => {
+    if (isTouch) return;
+    mouseX = e.clientX; mouseY = e.clientY;
+    
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+    targetTiltX = ((mouseY - centerY) / centerY) * -15;
+    targetTiltY = ((mouseX - centerX) / centerX) * 15;
+  });
+
+  window.addEventListener('deviceorientation', (e) => {
+    isTouch = true;
+    if (e.gamma !== null && e.beta !== null) {
+      targetTiltY = Math.max(-25, Math.min(25, e.gamma / 1.5));
+      targetTiltX = Math.max(-25, Math.min(25, (e.beta - 45) / 1.5)); 
+    }
+  });
+
+  window.addEventListener('touchstart', () => isTouch = true, {passive: true});
+
+  const pageSpring = new Spring(0, 80, 12);
+  pageSpring.target = 1;
+  const pageEl = document.getElementById('page');
+
+  const linkElements = Array.from(document.querySelectorAll('.link-wrapper'));
+  const linkStates = linkElements.map(el => ({
+    el: el,
+    item: el.querySelector('.link-item'),
+    glare: el.querySelector('.link-glare'),
+    scale: new Spring(1, 160, 10),
+    y: new Spring(0, 160, 10),
+    shadowY: new Spring(4, 160, 10),
+    shadowBlur: new Spring(20, 160, 10),
+    hovered: false
+  }));
+
+  const contactBtn = document.getElementById('contact-btn');
+  const contactScale = new Spring(1, 200, 15);
+  
+  contactBtn.addEventListener('mouseenter', () => contactScale.target = 1.05);
+  contactBtn.addEventListener('mouseleave', () => contactScale.target = 1);
+  contactBtn.addEventListener('mousedown', () => contactScale.target = 0.95);
+  contactBtn.addEventListener('mouseup', () => contactScale.target = 1.05);
+  contactBtn.addEventListener('touchstart', () => contactScale.target = 0.95, {passive: true});
+  contactBtn.addEventListener('touchend', () => contactScale.target = 1);
+
+  linkStates.forEach(state => {
+    state.item.addEventListener('mouseenter', () => {
+      if (isTouch) return;
+      state.hovered = true;
+      state.scale.target = 1.08;
+      state.y.target = -8;
+      state.shadowY.target = 18;
+      state.shadowBlur.target = 40;
+      state.glare.style.opacity = '0.35';
+    });
+    
+    state.item.addEventListener('mouseleave', () => {
+      state.hovered = false;
+      state.scale.target = 1;
+      state.y.target = 0;
+      state.shadowY.target = 4;
+      state.shadowBlur.target = 20;
+      state.glare.style.opacity = '0';
+      state.item.style.transform = '';
+    });
+
+    state.item.addEventListener('mousedown', () => state.scale.target = 0.94);
+    state.item.addEventListener('mouseup', () => { if(state.hovered) state.scale.target = 1.08; });
+    
+    state.item.addEventListener('touchstart', () => {
+      state.scale.target = 0.94;
+      state.glare.style.opacity = '0.3';
+    }, {passive: true});
+    state.item.addEventListener('touchend', () => {
+      state.scale.target = 1;
+      state.glare.style.opacity = '0';
+    });
+  });
+
+  let lastTime = performance.now();
+  
+  function uiLoop() {
+    const time = performance.now();
+    const dt = Math.min((time - lastTime) / 1000, 0.032);
+    lastTime = time;
+
+    currentTiltX = lerp(currentTiltX, targetTiltX, 0.05);
+    currentTiltY = lerp(currentTiltY, targetTiltY, 0.05);
+    
+    const container = document.getElementById('links-container');
+    if(!prefersReducedMotion) {
+      container.style.transform = `rotateX(${currentTiltX}deg) rotateY(${currentTiltY}deg)`;
+    }
+
+    pageSpring.update(dt);
+    if (pageSpring.val < 0.999 && !prefersReducedMotion) {
+      pageEl.style.opacity = pageSpring.val;
+      pageEl.style.transform = `translateY(${(1 - pageSpring.val) * 20}px)`;
+    } else if (pageEl.style.opacity !== '1') {
+      pageEl.style.opacity = '1';
+      pageEl.style.transform = 'translateY(0)';
+    }
+
+    contactScale.update(dt);
+    if(!prefersReducedMotion) contactBtn.style.transform = `scale(${contactScale.val})`;
+
+    linkStates.forEach(state => {
+      state.scale.update(dt);
+      state.y.update(dt);
+      state.shadowY.update(dt);
+      state.shadowBlur.update(dt);
+
+      if(!prefersReducedMotion) {
+        state.el.style.transform = `translateY(${state.y.val}px) scale(${state.scale.val})`;
+        state.item.style.boxShadow = `0 ${state.shadowY.val}px ${state.shadowBlur.val}px rgba(55, 120, 160, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.6)`;
+        
+        if (state.hovered) {
+          const rect = state.item.getBoundingClientRect();
+          const localX = mouseX - rect.left;
+          const localY = mouseY - rect.top;
+          state.glare.style.left = `${localX}px`;
+          state.glare.style.top = `${localY}px`;
+
+          const centerX = rect.width / 2;
+          const centerY = rect.height / 2;
+          const pullX = ((localX - centerX) / centerX) * 12;
+          const pullY = ((localY - centerY) / centerY) * 12;
+          state.item.style.transform = `translate(${pullX}px, ${pullY}px) rotateX(${pullY * -1.5}deg) rotateY(${pullX * 1.5}deg)`;
+        } else if (isTouch && state.scale.val !== 1) {
+          state.glare.style.left = `${50 + targetTiltY * 4}%`;
+          state.glare.style.top = `${50 + targetTiltX * 4}%`;
+        }
+      }
+    });
+
+    requestAnimationFrame(uiLoop);
+  }
+  requestAnimationFrame(uiLoop);
+
+  const canvas = document.getElementById('bg');
+  const ctx = canvas.getContext('2d', { alpha: false });
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const waves = [
+    { yRatio: 0.70, amp: 34, freq: 0.007,  speed: 0.000015, phase: 0,   color: '#bed4e0', parallax: 1.5 },
+    { yRatio: 0.79, amp: 26, freq: 0.0095, speed: 0.00025,  phase: 2.1, color: '#abcadd', parallax: 0.8 },
+    { yRatio: 0.88, amp: 19, freq: 0.011,  speed: 0.00035,  phase: 4.3, color: '#cde4f0', parallax: 0.2 },
+  ];
+
+  let t = 0;
+  function drawCanvas() {
+    ctx.fillStyle = '#eaeff4';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const smoothTiltX = currentTiltX * 3;
+
+    waves.forEach(w => {
+      const offsetY = canvas.height * w.yRatio + (smoothTiltX * w.parallax);
+      
+      ctx.beginPath();
+      ctx.moveTo(0, canvas.height);
+      for (let x = 0; x <= canvas.width + 10; x += 10) { 
+        const mouseInfluence = isTouch ? 0 : Math.sin((x - mouseX) * 0.005) * 5 * (1 - Math.abs(x - mouseX)/window.innerWidth);
+        const y = offsetY + Math.sin(x * w.freq + t * w.speed * 60 + w.phase) * w.amp + mouseInfluence;
+        ctx.lineTo(x, y);
+      }
+      ctx.lineTo(canvas.width, canvas.height);
+      ctx.closePath();
+      ctx.fillStyle = w.color;
+      ctx.fill();
+    });
+    t++;
+    requestAnimationFrame(drawCanvas);
+  }
+  
+  if (!prefersReducedMotion) {
+    drawCanvas();
+  } else {
+    drawCanvas(); 
+  }
+
+  const nameEl = document.getElementById('name-display');
+  const personas = ['daniel', 'dan', 'daniel nóbrega', 'dany'];
+  const pauseAfterType = [2200, 1400, 2800, 2200];
+  const typeSpeed = 80;
+  const deleteSpeed = 50;
+
+  let personaIdx = 0, charIdx = 0, isDeleting = false;
+
+  function tick() {
+    if(prefersReducedMotion) {
+      nameEl.textContent = 'daniel nóbrega';
+      document.querySelector('.cursor').style.display = 'none';
+      return;
+    }
+
+    const current = personas[personaIdx];
+    if (!isDeleting) {
+      charIdx++;
+      nameEl.textContent = current.slice(0, charIdx);
+      if (charIdx === current.length) {
+        isDeleting = true;
+        setTimeout(tick, pauseAfterType[personaIdx]);
+        return;
+      }
+      setTimeout(tick, typeSpeed + Math.random() * 40);
+    } else {
+      charIdx--;
+      nameEl.textContent = current.slice(0, charIdx);
+      if (charIdx === 0) {
+        isDeleting = false;
+        personaIdx = (personaIdx + 1) % personas.length;
+        setTimeout(tick, 200);
+        return;
+      }
+      setTimeout(tick, deleteSpeed + Math.random() * 20);
+    }
+  }
+  setTimeout(tick, 1000);
+
+</script>
+</body>
+</html>
